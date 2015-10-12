@@ -1,0 +1,4 @@
+node_modules/
+dist_node/
+dist_browser/
+images/
