@@ -22,6 +22,9 @@ export default class ColorPallete extends React.Component {
     }).then((data) => {
       let colors = new List(data.colors);
       colors = colors.map((c) => chroma(...c));
+      //colors = colors.filter((a) => a.hcl()[0] !== NaN);
+      // colors = colors.filter((a) => a.hcl()[1]
+      // colors = colors.sort((a, b) => a.hcl()[0] < b.hcl()[0]);
       this.setState({colors});
     }, (jqXHR, textStatus, errorThrown) => {
       console.error(textStatus);
@@ -45,7 +48,7 @@ class ColorSwatch extends React.Component {
 
   render(){
     return <div className="swatch" style={{
-      backgroundColor: this.props.color.css('hsl'),
+      backgroundColor: this.props.color.hex(),//css('hsl'),
       display: 'inline-block',
       width: '50px',
       height: '50px'

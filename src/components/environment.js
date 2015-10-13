@@ -19,19 +19,20 @@ import 'node-easel';
 //for now, we expect appends to the same immutable array
 
 export class Environment extends React.Component {
-  rectangles: List<Rectangle>;
-  shapes: Map<Rectangle, createjs.Shape>; //this is wrong.
+  rectangles: Map<string, Rectangle>;
+  shapes: Map<string, createjs.Shape>;
   stage: ?createjs.Stage;
   container: ?createjs.Container;
 
   propTypes: {
     width: React.PropTypes.number.isRequired,
     height: React.PropTypes.number.isRequired,
-    rectangles: ImmutablePropTypes.listOf(React.PropTypes.instanceOf(Rectangle)).isRequired
+    rectangles: ImmutablePropTypes.listOf(React.PropTypes.instanceOf(Rectangle)).isRequired,
+    updateRectState: React.PropTypes.func.isRequired; //called when rectangles are added or deleted from within
   }
 
   constructor(){
-    this.rectangles = new List();
+    this.rectangles = new Map();
     this.shapes = new Map();
   }
 
@@ -55,6 +56,9 @@ export class Environment extends React.Component {
     this.canvasHeight = this.stage.canvas.height;
     //add other attributes
 
+    this.stage.enableMouseOver(10);
+    this.stage.mouseMoveOutside = true;
+
     if( this.rectangles.size > 0 ){
       this.draw();
     }
@@ -70,6 +74,10 @@ export class Environment extends React.Component {
   }
 
   draw(){
+    this.rectangles.map((rect, key) => {
+      if( this.shapes.has() )
+    })
+
     this.shapes = this.shapes.merge(this.rectangles.map((rect) =>
 
     ));
@@ -83,14 +91,43 @@ export class Rectangle {
   h: number;
   scale: number;
   rotation: number;
+  color: Color;
 
-  constructor(x, y, w, h){
+  constructor(x, y, w, h, color){
     this.x = x;
     this.y = y;
     this.w = w;
     this.h = h;
 
+    this.color = color;
+
     this.scale = 1;
     this.rotation = 0;
+  }
+
+}
+
+class EaselRectangle extends Rectangle { //outside folks don't know about this one
+  makeShape() : createjs.Shape {
+    let shape = new createjs.Shape();
+    shape.scaleX = shape.scaleY = this.scale;
+    shape.rotation = this.rotation;
+
+    shape.on("mousedown", function(evt){
+
+    });
+
+    shape.on("pressmove", function(evt){
+
+    });
+
+    return shape;
+  }
+
+  updateShape( shape : createjs.Shape ) : createjs.Shape {
+    shape.scaleX = shape.scaleY = this.scale;
+    shape.rotation = this.rotation;
+
+    return shape;
   }
 }
