@@ -80,9 +80,8 @@ export class Environment extends React.Component {
         this.container.addChild(s.shape);
       });
       this.shapes = this.shapes.merge(newShapes)
-                               .filter((_, key) => nextProps.rectangles.has(key));
-                               //remove removed shapes
-
+                               .filter((_, key) => nextProps.rectangles.has(key))
+                               .filter((_, key) => !removedShapes.has(key));
 
     }
   }
