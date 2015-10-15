@@ -21,7 +21,6 @@ import 'node-easel';
 var update = false;
 
 export class Environment extends React.Component {
-  //rectangles: Map<string, Rectangle>;
   shapes: ?Map<string, createjs.Shape>;
   stage: ?createjs.Stage;
   container: ?createjs.Container;
@@ -34,8 +33,7 @@ export class Environment extends React.Component {
   }
 
   constructor(){
-    //this.rectangles = new Map();
-    //this.shapes = new Map();
+    this.shapes = new Map();
   }
 
   render(){
@@ -82,6 +80,7 @@ export class Environment extends React.Component {
       this.shapes = this.shapes.merge(newShapes)
                                .filter((_, key) => nextProps.rectangles.has(key))
                                .filter((_, key) => !removedShapes.has(key));
+      update = true;
 
     }
   }
@@ -178,14 +177,5 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
           //we'll come back to this one
       }
     });
-
-    return shape;
-  }
-
-  updateShape( shape : createjs.Shape ) : createjs.Shape {
-    shape.scaleX = shape.scaleY = this.scale;
-    shape.rotation = this.rotation;
-
-    return shape;
   }
 }

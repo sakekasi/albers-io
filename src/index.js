@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import ColorPalette from './components/colorpalette.js';
+import Application from './application.js';
 
 ReactDOM.render(
-  <ColorPalette source="http://localhost:8000/colors.json"/>,
+  <Application/>,
   document.getElementById('palette')
 );

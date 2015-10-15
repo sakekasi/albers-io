@@ -5,7 +5,8 @@ import { List } from 'immutable';
 
 export default class ColorPallete extends React.Component {
   propTypes: {
-    source: React.PropTypes.string
+    source: React.PropTypes.string.isRequired,
+    pickColor: React.PropTypes.func.isRequired,
   }
 
   constructor(){
@@ -32,7 +33,8 @@ export default class ColorPallete extends React.Component {
   }
 
   render(){
-    let children = this.state.colors.map((c) => <ColorSwatch color={c}/>);
+    let children = this.state.colors.map((c) => <ColorSwatch color={c}
+                                                   pickColor={this.props.pickColor}/>);
     return (
       <div className="palette">
         {children}
@@ -43,7 +45,8 @@ export default class ColorPallete extends React.Component {
 
 class ColorSwatch extends React.Component {
   propTypes: {
-    //color: React.PropTypes.instanceOf(chroma);
+    pickColor: React.PropTypes.func.isRequired,
+    color: React.PropTypes.instanceOf(Color),
   }
 
   render(){
@@ -52,6 +55,10 @@ class ColorSwatch extends React.Component {
       display: 'inline-block',
       width: '50px',
       height: '50px'
-    }}/>
+    }} onClick={this.handleClick}/>;
+  }
+
+  handleClick(){
+    this.props.pickColor(this.props.color);
   }
 }
