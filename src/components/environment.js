@@ -1,7 +1,7 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import { List, Map } from 'immutable';
-import 'node-easel';
 
 //actions
 //
@@ -25,18 +25,13 @@ export class Environment extends React.Component {
   stage: ?createjs.Stage;
   container: ?createjs.Container;
 
-  propTypes: {
-    width: React.PropTypes.number.isRequired,
-    height: React.PropTypes.number.isRequired,
-    rectangles: ImmutablePropTypes.mapOf(React.PropTypes.instanceOf(Rectangle)).isRequired,
-    updateRectState: React.PropTypes.func.isRequired; //called when rectangles are added or deleted from within
-  }
 
   constructor(){
+    super();
     this.shapes = new Map();
   }
 
-  render(){
+  render(): React.Component {
     return (
       <canvas ref="canvas"
               width={this.props.width}
@@ -46,14 +41,14 @@ export class Environment extends React.Component {
 
   componentDidMount(){
     //Init CreateJS
-    var canvas = react.findDOMNode(this.refs.canvas);
+    var canvas = ReactDOM.findDOMNode(this.refs.canvas);
     this.stage = new createjs.Stage(canvas);
     this.container = new createjs.Container();
-    this.stage.addChild(container);
+    this.stage.addChild(this.container);
     //might not want to follow tick
 
-    this.canvasWidth = this.stage.canvas.width;
-    this.canvasHeight = this.stage.canvas.height;
+    // this.canvasWidth = this.stage.canvas.width;
+    // this.canvasHeight = this.stage.canvas.height;
     //add other attributes
 
     this.stage.enableMouseOver(10);
@@ -61,37 +56,51 @@ export class Environment extends React.Component {
 
     this.shapes = this.props.rectangles.map(rect => new EaselRectangle(rect));
     this.shapes.forEach(s => {
-      this.contianer.addChild(s.shape);
+      this.container.addChild(s.shape);
+      s.shape.graphics.beginFill(s.color.hex()).drawRect(0, 0, this.shape.w, this.shape.h).endFill();
+      s.cache();
+      s.shape.x = s.x;
+      s.shape.y = s.y;
     });
 
-    createjs.Ticker.addEventListener("tick", this.tick);
+    createjs.Ticker.addEventListener("tick", this.tick.bind(this));
   }
 
-  componentWillRecieveProps(nextProps){
-    if(nextProps.rectangles !== this.props.rectangles){
+  componentWillReceiveProps(nextProps){
       let newShapes = nextProps.rectangles.filter((_, key) => this.shapes.has(key))
                           .map(rect => new EaselRectangle(rect));
       let removedShapes = this.shapes.filter((_, key) => !nextProps.rectangles.has(key));
 
+      removedShapes.forEach(s => {
+        this.container.removeChild(s.shape);
+      })
 
-      newShapes.forEach(s => {
-        this.container.addChild(s.shape);
+      nextProps.rectangles.forEach((rect, key) => {
+        if(!this.shapes.has(key)){
+          let s = new EaselRectangle(rect);
+          this.container.addChild(s.shape);
+          s.shape.beginFill(s.color.hex()).drawRect(0, 0, this.shape.w, this.shape.h).endFill();
+          s.cache();
+          s.shape.x = s.x;
+          s.shape.y = s.y;
+        }
       });
-      this.shapes = this.shapes.merge(newShapes)
-                               .filter((_, key) => nextProps.rectangles.has(key))
-                               .filter((_, key) => !removedShapes.has(key));
       update = true;
-
-    }
   }
 
   tick(event){
     if(update){
       update = false;
-      stage.update(event);
+      this.stage.update(event);
     }
   }
 }
+// Environment.propTypes = {
+//   width: React.PropTypes.number.isRequired,
+//   height: React.PropTypes.number.isRequired,
+//   rectangles: ImmutablePropTypes.mapOf(React.PropTypes.instanceOf(Rectangle)).isRequired,
+//   updateRectState: React.PropTypes.func.isRequired, //called when rectangles are added or deleted from within
+// };
 
 export class Rectangle {
   x: number;
@@ -133,10 +142,10 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
     this.shape = new createjs.Shape();
     this.shape.x = this.x;
     this.shape.y = this.y;
-    this.shape.scaleX = shape.scaleY = this.scale;
+    this.shape.scaleX = this.shape.scaleY = this.scale;
     this.shape.rotation = this.rotation;
 
-    shape.on("mousedown", (evt) => {
+    this.shape.on("mousedown", (evt) => {
       if(evt.nativeEvent.button === 0){ //LEFT CLICK
         if(shift_pressed){ //rotate
           this.state = "ROTATE";
@@ -153,11 +162,11 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
       }
     });
 
-    shape.on("mouseup", (evt) => {
+    this.shape.on("mouseup", (evt) => {
       this.state = "DEFAULT";
     });
 
-    shape.on("pressmove", (evt) => {
+    this.shape.on("pressmove", (evt) => {
       switch(this.state){
         case "TRANSLATE":
           this.shape.x = this.x = evt.stageX + this.offset.x;

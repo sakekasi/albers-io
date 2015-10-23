@@ -1,25 +1,28 @@
+/* @flow */
 import React from 'react';
 import { Map } from 'immutable';
+import chroma from 'chroma-js';
 
 import ColorPalette from './components/colorpalette.js';
-import {Environment, Rectangle} from './components/environment.js';
+import { Environment, Rectangle } from './components/environment.js';
 
 export default class Application extends React.Component {
   nextRectNum: number;
 
   constructor(){
+    super();
     this.state = {
-      nextRectNum: 0,
-      rectangles: new Map(),
+      nextRectNum: 1,
+      rectangles: new Map({"0": new Rectangle(0, 0, 50, 70, chroma('black'))}),
     }
   }
 
   render(){
     return (
       <div>
-        <ColorPalette source="http://localhost:8000/colors.json" pickColor={this.pickColor}/>
-        <Environment width=500 height=500 rectangles={this.state.rectangles}
-                     updateRectState={this.updateRectState}/>
+        <ColorPalette source="http://localhost:8000/colors.json" pickColor={this.pickColor.bind(this)}/>
+        <Environment width={500} height={500} rectangles={this.state.rectangles}
+                     updateRectState={this.updateRectState.bind(this)}/>
       </div>
     );
   }

@@ -19,6 +19,7 @@
     "node-easel": "~0.1.2",
     "react": "~0.14.0",
     "react-dom": "^0.14.0",
+    "react-immutable-proptypes": "^1.2.3",
     "tumblr": "~0.4.1"
   },
   "devDependencies": {

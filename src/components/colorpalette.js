@@ -44,10 +44,10 @@ export default class ColorPallete extends React.Component {
 }
 
 class ColorSwatch extends React.Component {
-  propTypes: {
-    pickColor: React.PropTypes.func.isRequired,
-    color: React.PropTypes.instanceOf(Color),
-  }
+  // propTypes: {
+  //   pickColor: React.PropTypes.func.isRequired,
+  //   color: React.PropTypes.instanceOf(Color),
+  // }
 
   render(){
     return <div className="swatch" style={{
@@ -55,7 +55,7 @@ class ColorSwatch extends React.Component {
       display: 'inline-block',
       width: '50px',
       height: '50px'
-    }} onClick={this.handleClick}/>;
+    }} onClick={this.handleClick.bind(this)}/>;
   }
 
   handleClick(){
