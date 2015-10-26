@@ -1,0 +1,8 @@
+body{
+  background-color: hsla(0,0%, 80%, 1);
+}
+
+canvas {
+  /*border: 1px solid black;*/
+  background-color: hsla(0,0%,100%, 1);
+}

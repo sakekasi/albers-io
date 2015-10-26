@@ -23,6 +23,7 @@ export default class ColorPallete extends React.Component {
     }).then((data) => {
       let colors = new List(data.colors);
       colors = colors.map((c) => chroma(...c));
+      colors = colors.slice(0, 266); //TODO: make this a prop
       //colors = colors.filter((a) => a.hcl()[0] !== NaN);
       // colors = colors.filter((a) => a.hcl()[1]
       // colors = colors.sort((a, b) => a.hcl()[0] < b.hcl()[0]);

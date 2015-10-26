@@ -16,19 +16,20 @@ import { List, Map } from 'immutable';
 //clone (right click)
 //delete (shift pressed, right click)
 
-//for now, we expect appends to the same immutable array
-
 var update = false;
 
 export class Environment extends React.Component {
-  shapes: ?Map<string, createjs.Shape>;
-  stage: ?createjs.Stage;
-  container: ?createjs.Container;
-
+  // shapes: ?Map<string, createjs.Shape>;
+  // stage: ?createjs.Stage;
+  // container: ?createjs.Container;
 
   constructor(){
     super();
-    this.shapes = new Map();
+    this.state = {
+      shapes: new Map(),
+      stage: null,
+      container: new createjs.Container()
+    }
   }
 
   render(): React.Component {
@@ -40,58 +41,58 @@ export class Environment extends React.Component {
   }
 
   componentDidMount(){
-    //Init CreateJS
-    var canvas = ReactDOM.findDOMNode(this.refs.canvas);
-    this.stage = new createjs.Stage(canvas);
-    this.container = new createjs.Container();
-    this.stage.addChild(this.container);
-    //might not want to follow tick
+    let canvas = ReactDOM.findDOMNode(this.refs.canvas);
+    let stage = new createjs.Stage(canvas);
+    stage.addChild(this.state.container);
 
-    // this.canvasWidth = this.stage.canvas.width;
-    // this.canvasHeight = this.stage.canvas.height;
-    //add other attributes
+    stage.enableMouseOver(10);
+    stage.mouseMoveOutside = true;
 
-    this.stage.enableMouseOver(10);
-    this.stage.mouseMoveOutside = true;
 
-    this.shapes = this.props.rectangles.map(rect => new EaselRectangle(rect));
-    this.shapes.forEach(s => {
-      this.container.addChild(s.shape);
-      s.shape.graphics.beginFill(s.color.hex()).drawRect(0, 0, this.shape.w, this.shape.h).endFill();
-      s.cache();
-      s.shape.x = s.x;
-      s.shape.y = s.y;
+    let shapes = this.props.rectangles.map(rect => new EaselRectangle(rect));
+    shapes.forEach(s => {
+      this.state.container.addChild(s.shape);
+      // s.shape.cache();
     });
 
+    update = true;
     createjs.Ticker.addEventListener("tick", this.tick.bind(this));
+    this.setState({
+      stage, shapes
+    });
   }
 
   componentWillReceiveProps(nextProps){
-      let newShapes = nextProps.rectangles.filter((_, key) => this.shapes.has(key))
-                          .map(rect => new EaselRectangle(rect));
-      let removedShapes = this.shapes.filter((_, key) => !nextProps.rectangles.has(key));
+    let added, removed;
+    added = nextProps.rectangles.filter((_, key) => !this.state.shapes.has(key));
+    removed = this.state.shapes.filter((_, key) => !nextProps.rectangles.has(key));
 
-      removedShapes.forEach(s => {
-        this.container.removeChild(s.shape);
-      })
+    let shapes = this.state.shapes.merge(
+      added.map(rect => new EaselRectangle(rect))
+    );
 
-      nextProps.rectangles.forEach((rect, key) => {
-        if(!this.shapes.has(key)){
-          let s = new EaselRectangle(rect);
-          this.container.addChild(s.shape);
-          s.shape.beginFill(s.color.hex()).drawRect(0, 0, this.shape.w, this.shape.h).endFill();
-          s.cache();
-          s.shape.x = s.x;
-          s.shape.y = s.y;
-        }
-      });
-      update = true;
+    added.forEach((_, key) => {
+      this.state.container.addChild(shapes.get(key).shape);
+    });
+    removed.forEach((_, key) => {
+      this.state.container.removeChild(shapes.get(key).shape);
+      shapes = shapes.delete(key);
+    });
+
+    update = true;
+    this.setState({
+      shapes
+    });
+  }
+
+  shouldComponentUpdate(nextProps, nextState){
+    return false; //TODO; doublecheck this
   }
 
   tick(event){
     if(update){
       update = false;
-      this.stage.update(event);
+      this.state.stage.update();
     }
   }
 }
@@ -120,7 +121,7 @@ export class Rectangle {
     this.color = color;
 
     this.scale = 1;
-    this.rotation = 0;
+    this.rotation = 0;//Math.random()*50-25;
   }
 
 }
@@ -140,20 +141,25 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
     this.origClick = null;
 
     this.shape = new createjs.Shape();
+
+    this.shape.graphics.beginFill(this.color.hex()).drawRect(0, 0, this.w, this.h).endFill();
+
     this.shape.x = this.x;
     this.shape.y = this.y;
     this.shape.scaleX = this.shape.scaleY = this.scale;
     this.shape.rotation = this.rotation;
 
     this.shape.on("mousedown", (evt) => {
+      console.log("mousedown", evt);
       if(evt.nativeEvent.button === 0){ //LEFT CLICK
-        if(shift_pressed){ //rotate
-          this.state = "ROTATE";
-        } else if(ctrl_pressed){ //scale
-          this.state = "TRANSLATE";
-        } else { //translate
-          this.state = "SCALE";
-        }
+        // if(shift_pressed){ //rotate
+        //   this.state = "ROTATE";
+        // } else if(ctrl_pressed){ //scale
+        //   this.state = "TRANSLATE";
+        // } else { //translate
+          //this.state = "SCALE";
+          this.state="TRANSLATE";
+        // }
 
         this.offset = {x: this.shape.x - evt.stageX, y: this.shape.y - evt.stageY};
         this.origClick = {x: evt.stageX, y: evt.stageY};
@@ -163,12 +169,15 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
     });
 
     this.shape.on("mouseup", (evt) => {
+      console.log("mousedown", evt);
       this.state = "DEFAULT";
     });
 
     this.shape.on("pressmove", (evt) => {
+      //console.log("pressmove", evt);
       switch(this.state){
         case "TRANSLATE":
+          console.log("TRANSLATE", evt.stageX + this.offset.x, evt.stageY + this.offset.y);
           this.shape.x = this.x = evt.stageX + this.offset.x;
           this.shape.y = this.y = evt.stageY + this.offset.y;
           update = true;

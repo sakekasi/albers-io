@@ -12,8 +12,8 @@ export default class Application extends React.Component {
   constructor(){
     super();
     this.state = {
-      nextRectNum: 1,
-      rectangles: new Map({"0": new Rectangle(0, 0, 50, 70, chroma('black'))}),
+      nextRectNum: 0,
+      rectangles: new Map(),
     }
   }
 
@@ -21,7 +21,7 @@ export default class Application extends React.Component {
     return (
       <div>
         <ColorPalette source="http://localhost:8000/colors.json" pickColor={this.pickColor.bind(this)}/>
-        <Environment width={500} height={500} rectangles={this.state.rectangles}
+        <Environment width={1900} height={550} rectangles={this.state.rectangles}
                      updateRectState={this.updateRectState.bind(this)}/>
       </div>
     );
