@@ -35,9 +35,19 @@ export class Environment extends React.Component {
   render(): React.Component {
     return (
       <canvas ref="canvas"
+              onKeyDown={this.keyDown.bind(this)}
+              onKeyUp={this.keyUp.bind(this)}
               width={this.props.width}
               height={this.props.height}></canvas>
     );
+  }
+
+  keyDown(event){
+    console.log(e.type, e.which, e.timeStamp);
+  }
+
+  keyUp(event){
+    console.log(e.type, e.which, e.timeStamp);
   }
 
   componentDidMount(){
@@ -152,14 +162,13 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
     this.shape.on("mousedown", (evt) => {
       console.log("mousedown", evt);
       if(evt.nativeEvent.button === 0){ //LEFT CLICK
-        // if(shift_pressed){ //rotate
-        //   this.state = "ROTATE";
-        // } else if(ctrl_pressed){ //scale
-        //   this.state = "TRANSLATE";
-        // } else { //translate
-          //this.state = "SCALE";
-          this.state="TRANSLATE";
-        // }
+        if(evt.nativeEvent.shiftKey){
+          this.state = "ROTATE";
+        } else if(evt.nativeEvent.ctrlKey){
+          this.state = "TRANSLATE";
+        } else {
+          this.state = "SCALE";
+        }
 
         this.offset = {x: this.shape.x - evt.stageX, y: this.shape.y - evt.stageY};
         this.origClick = {x: evt.stageX, y: evt.stageY};
@@ -177,17 +186,17 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
       //console.log("pressmove", evt);
       switch(this.state){
         case "TRANSLATE":
-          console.log("TRANSLATE", evt.stageX + this.offset.x, evt.stageY + this.offset.y);
           this.shape.x = this.x = evt.stageX + this.offset.x;
           this.shape.y = this.y = evt.stageY + this.offset.y;
           update = true;
           break;
         case "ROTATE":
           let vec = {
-            x: evt.stageX - this.origClick.x,
+            x: evt.stageX - this.origClick.x, //this is wrong. we need the rectangle's "center"
             y: evt.stageY - this.origClick.y
           };
-          let theta = (Math.atan2(y, x) + Math.PI) * 360 / (2*MATH.PI);
+          let theta = (Math.atan2(vec.y, vec.x) /*- Math.PI/2*/ ) * 360 / (2*Math.PI);
+          console.log(theta, vec.x, vec.y);
           this.shape.rotation = this.rotation = theta;
           update = true;
           break;

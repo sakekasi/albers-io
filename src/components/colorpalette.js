@@ -21,12 +21,11 @@ export default class ColorPallete extends React.Component {
       url: this.props.source,
       dataType: 'json',
     }).then((data) => {
+      let numSwatches = 5 * ((jQuery(window).width() / 50) - 1); //50 is hardcoded at the moment. represents width of swatch
+
       let colors = new List(data.colors);
       colors = colors.map((c) => chroma(...c));
-      colors = colors.slice(0, 266); //TODO: make this a prop
-      //colors = colors.filter((a) => a.hcl()[0] !== NaN);
-      // colors = colors.filter((a) => a.hcl()[1]
-      // colors = colors.sort((a, b) => a.hcl()[0] < b.hcl()[0]);
+      colors = colors.slice(0, numSwatches);
       this.setState({colors});
     }, (jqXHR, textStatus, errorThrown) => {
       console.error(textStatus);
@@ -34,8 +33,9 @@ export default class ColorPallete extends React.Component {
   }
 
   render(){
-    let children = this.state.colors.map((c) => <ColorSwatch color={c}
-                                                   pickColor={this.props.pickColor}/>);
+    let children = this.state.colors.map((c, i) => <ColorSwatch color={c}
+                                                     key={i}
+                                                     pickColor={this.props.pickColor}/>);
     return (
       <div className="palette">
         {children}
