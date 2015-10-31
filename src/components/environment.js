@@ -140,6 +140,7 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
   shape: createjs.Shape;
   state: string;
   offset: ?object;
+  center: ?object;
   origClick: ?object;
   //default, translate, rotate, scale
 
@@ -148,11 +149,12 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
 
     this.state = "DEFAULT";
     this.offset = null;
+    this.center = null;
     this.origClick = null;
 
     this.shape = new createjs.Shape();
 
-    this.shape.graphics.beginFill(this.color.hex()).drawRect(0, 0, this.w, this.h).endFill();
+    this.shape.graphics.beginFill(this.color.hex()).drawRect(-this.w/2, -this.h/2, this.w, this.h).endFill();
 
     this.shape.x = this.x;
     this.shape.y = this.y;
@@ -165,12 +167,14 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
         if(evt.nativeEvent.shiftKey){
           this.state = "ROTATE";
         } else if(evt.nativeEvent.ctrlKey){
-          this.state = "TRANSLATE";
-        } else {
           this.state = "SCALE";
+        } else {
+          this.state = "TRANSLATE";
         }
 
-        this.offset = {x: this.shape.x - evt.stageX, y: this.shape.y - evt.stageY};
+        this.center = {x: this.shape.x,
+                       y: this.shape.y}
+        this.offset = {x: evt.stageX - this.shape.x, y: evt.stageY - this.shape.y};
         this.origClick = {x: evt.stageX, y: evt.stageY};
       } else if(evt.nativeEvent.button === 2){ //RIGHT CLICK
 
@@ -192,8 +196,8 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
           break;
         case "ROTATE":
           let vec = {
-            x: evt.stageX - this.origClick.x, //this is wrong. we need the rectangle's "center"
-            y: evt.stageY - this.origClick.y
+            x: evt.stageX - this.center.x, //this is wrong. we need the rectangle's "center"
+            y: evt.stageY - this.center.y
           };
           let theta = (Math.atan2(vec.y, vec.x) /*- Math.PI/2*/ ) * 360 / (2*Math.PI);
           console.log(theta, vec.x, vec.y);
@@ -201,8 +205,30 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
           update = true;
           break;
         case "SCALE":
-          //we'll come back to this one
+          vec = {
+            x: evt.stageX - this.center.x,
+            y: evt.stageY - this.center.y
+          };
+          //aspect ratio determined by y/x of vec
+          let aspect = vec.y / vec.x; //wrong behaviour
+          //amount to scale determined by dividing magnitude
+          let scaleMagnitude = Math.hypot(vec.x, vec.y) / Math.hypot(this.offset.x, this.offset.y);
+
+
+          this.shape.scaleX = scaleMagnitude;
+          this.shape.scaleY = aspect * scaleMagnitude;
+          update=true;
+          break;
       }
     });
   }
+}
+
+
+function degrees(radians: number){
+  return radians / Math.PI * 180;
+}
+
+function radians(degrees: number){
+  return degrees / 180 * Math.PI;
 }

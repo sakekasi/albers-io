@@ -32,7 +32,7 @@ export default class Application extends React.Component {
     this.setState({
       rectangles: this.state.rectangles.set(
         (this.state.nextRectNum + 1).toString(),
-        new Rectangle(50,50,100,50,color)
+        new Rectangle(150,150,100,100,color)
       ),
       nextRectNum: this.state.nextRectNum + 1,
     });
