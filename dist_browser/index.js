@@ -35944,7 +35944,7 @@ var Application = (function (_React$Component) {
       return _react2['default'].createElement(
         'div',
         null,
-        _react2['default'].createElement(_componentsColorpaletteJs2['default'], { source: 'http://localhost:8000/colors.json', pickColor: this.pickColor.bind(this) }),
+        _react2['default'].createElement(_componentsColorpaletteJs2['default'], { source: 'colors.json', pickColor: this.pickColor.bind(this) }),
         _react2['default'].createElement(_componentsEnvironmentJs.Environment, { width: (0, _jquery2['default'])(window).width() - 50, height: (0, _jquery2['default'])(window).height() - 300, rectangles: this.state.rectangles,
           updateRectState: this.updateRectState.bind(this) })
       );
