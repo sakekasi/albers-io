@@ -53,6 +53,7 @@ export class Environment extends React.Component {
   componentDidMount(){
     let canvas = ReactDOM.findDOMNode(this.refs.canvas);
     let stage = new createjs.Stage(canvas);
+    createjs.Touch.enable(stage);
     stage.addChild(this.state.container);
 
     stage.enableMouseOver(10);
