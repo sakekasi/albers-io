@@ -21,7 +21,7 @@ export default class Application extends React.Component {
   render(){
     return (
       <div>
-        <ColorPalette source="http://localhost:8000/colors.json" pickColor={this.pickColor.bind(this)}/>
+        <ColorPalette source="colors.json" pickColor={this.pickColor.bind(this)}/>
         <Environment width={jQuery(window).width() - 50} height={jQuery(window).height() - 300} rectangles={this.state.rectangles}
                      updateRectState={this.updateRectState.bind(this)}/>
       </div>
