@@ -2,7 +2,7 @@
 import React from 'react';
 import { Map } from 'immutable';
 import chroma from 'chroma-js';
-import jQuery from 'jquery';
+import $ from 'jquery';
 
 import ColorPalette from './components/colorpalette.js';
 import { Environment, Rectangle } from './components/environment.js';
@@ -21,8 +21,8 @@ export default class Application extends React.Component {
   render(){
     return (
       <div>
-        <ColorPalette source="colors.json" pickColor={this.pickColor.bind(this)}/>
-        <Environment width={jQuery(window).width() - 50} height={jQuery(window).height() - 300} rectangles={this.state.rectangles}
+        <ColorPalette source="colors.json" pickColor={this.pickColor.bind(this)} width={$("body").width()} height={$("body").height()}/>
+        <Environment width={$('body').width() - 200} height={$('body').height() - 200} rectangles={this.state.rectangles}
                      updateRectState={this.updateRectState.bind(this)}/>
       </div>
     );

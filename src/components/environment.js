@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import { List, Map } from 'immutable';
+import $ from 'jquery';
 
 //actions
 //
@@ -33,8 +34,11 @@ export class Environment extends React.Component {
   }
 
   render(): React.Component {
+    let horizontalMargin = ($('body').width() - this.props.width) / 2;
+    let verticalMargin = ($('body').height() - this.props.height) / 2;
+    let style = {left: horizontalMargin, top: verticalMargin};
     return (
-      <canvas ref="canvas"
+      <canvas ref="canvas" style={style}
               onKeyDown={this.keyDown.bind(this)}
               onKeyUp={this.keyUp.bind(this)}
               width={this.props.width}
@@ -191,8 +195,8 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
       //console.log("pressmove", evt);
       switch(this.state){
         case "TRANSLATE":
-          this.shape.x = this.x = evt.stageX + this.offset.x;
-          this.shape.y = this.y = evt.stageY + this.offset.y;
+          this.shape.x = this.x = evt.stageX - this.offset.x;
+          this.shape.y = this.y = evt.stageY - this.offset.y;
           update = true;
           break;
         case "ROTATE":

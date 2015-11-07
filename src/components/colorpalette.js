@@ -1,6 +1,6 @@
 import React from 'react';
 import chroma from 'chroma-js';
-import jQuery from 'jquery';
+import $ from 'jquery';
 import { List } from 'immutable';
 
 export default class ColorPallete extends React.Component {
@@ -17,11 +17,11 @@ export default class ColorPallete extends React.Component {
   }
 
   componentDidMount(){
-    jQuery.ajax({
+    $.ajax({
       url: this.props.source,
       dataType: 'json',
     }).then((data) => {
-      let numSwatches = 5 * ((jQuery(window).width() / 50) - 1); //50 is hardcoded at the moment. represents width of swatch
+      let numSwatches = Math.ceil(this.props.height / 50) * Math.ceil(this.props.width / 50); //50 is hardcoded at the moment. represents width of swatch
 
       let colors = new List(data.colors);
       colors = colors.map((c) => chroma(...c));
@@ -34,10 +34,11 @@ export default class ColorPallete extends React.Component {
 
   render(){
     let children = this.state.colors.map((c, i) => <ColorSwatch color={c}
-                                                     key={i}
+                                                     key={i}floor
                                                      pickColor={this.props.pickColor}/>);
+    let style = {width: Math.ceil(this.props.width / 50) * 50};
     return (
-      <div className="palette">
+      <div className="palette" style={style}>
         {children}
       </div>
     )
