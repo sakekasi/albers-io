@@ -3,11 +3,12 @@ var color = require('dominant-color'),
     path  = require('path'),
     async = require('async');
 
-var dirName = '../prettycolors/'
+var dirName = '../tumblrip/target/gurafiku-images/'
 
 var images = fs.readdirSync(dirName)
                .filter(function(fileName){
-                 return fileName.substring(fileName.length - 4) === ".png";
+                 return fileName.substring(fileName.length - 4) === ".png" ||
+                        fileName.substring(fileName.length - 4) === ".jpg";
                });
 
 var output = [];
@@ -19,7 +20,7 @@ async.eachSeries(images,
     try{
       color(path.join(dirName, fileName), {format: 'rgb'}, function(err, c){
         console.error(err, c);
-        if(c.length === 4){
+        if(c.length >= 3){
           output.push(c.slice(0,3));
         }
         done();
