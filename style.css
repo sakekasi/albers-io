@@ -21,3 +21,7 @@ canvas {
   font-family: sans-serif;
   z-index: 1;
 }
+
+.swatch {
+  cursor: pointer;
+}
