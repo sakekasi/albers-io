@@ -66,7 +66,7 @@ export class Environment extends React.Component {
 
     let shapes = this.props.rectangles.map(rect => new EaselRectangle(rect));
     shapes.forEach(s => {
-      this.state.container.addChild(s.shape);
+      this.state.container.addChild(s.container);
       // s.shape.cache();
     });
 
@@ -87,10 +87,10 @@ export class Environment extends React.Component {
     );
 
     added.forEach((_, key) => {
-      this.state.container.addChild(shapes.get(key).shape);
+      this.state.container.addChild(shapes.get(key).container);
     });
     removed.forEach((_, key) => {
-      this.state.container.removeChild(shapes.get(key).shape);
+      this.state.container.removeChild(shapes.get(key).container);
       shapes = shapes.delete(key);
     });
 
@@ -142,12 +142,12 @@ export class Rectangle {
 }
 
 class EaselRectangle extends Rectangle { //outside folks don't know about this one
-  shape: createjs.Shape;
+  rectangle: createjs.Shape;
   state: string;
   offset: ?object;
   center: ?object;
   origClick: ?object;
-  //default, translate, rotate, scale
+  container: ?object;
 
   constructor(rect){
     super(rect.x, rect.y, rect.w, rect.h, rect.color);
@@ -157,16 +157,19 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
     this.center = null;
     this.origClick = null;
 
-    this.shape = new createjs.Shape();
+    this.container = new createjs.Container();
+    this.rectangle = new createjs.Shape();
+    this.container.addChild(this.rectangle);
 
-    this.shape.graphics.beginFill(this.color.hex()).drawRect(-this.w/2, -this.h/2, this.w, this.h).endFill();
+    this.rectangle.graphics.beginFill(this.color.hex()).drawRect(-this.w/2, -this.h/2, this.w, this.h).endFill();
 
-    this.shape.x = this.x;
-    this.shape.y = this.y;
-    this.shape.scaleX = this.shape.scaleY = this.scale;
-    this.shape.rotation = this.rotation;
+    //don't know how sensible it is to maintain parallel variables
+    this.container.x = this.x;
+    this.container.y = this.y;
+    this.rectangle.scaleX = this.rectangle.scaleY = this.scale;
+    this.rectangle.rotation = this.rotation;
 
-    this.shape.on("mousedown", (evt) => {
+    this.rectangle.on("mousedown", (evt) => {
       console.log("mousedown", evt);
       if(evt.nativeEvent.button === 0){ //LEFT CLICK
         if(evt.nativeEvent.shiftKey){
@@ -177,26 +180,26 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
           this.state = "TRANSLATE";
         }
 
-        this.center = {x: this.shape.x,
-                       y: this.shape.y}
-        this.offset = {x: evt.stageX - this.shape.x, y: evt.stageY - this.shape.y};
+        this.center = {x: this.container.x,
+                       y: this.container.y}
+        this.offset = {x: evt.stageX - this.container.x, y: evt.stageY - this.container.y};
         this.origClick = {x: evt.stageX, y: evt.stageY};
       } else if(evt.nativeEvent.button === 2){ //RIGHT CLICK
 
       }
     });
 
-    this.shape.on("mouseup", (evt) => {
+    this.rectangle.on("mouseup", (evt) => {
       console.log("mousedown", evt);
       this.state = "DEFAULT";
     });
 
-    this.shape.on("pressmove", (evt) => {
+    this.rectangle.on("pressmove", (evt) => {
       //console.log("pressmove", evt);
       switch(this.state){
         case "TRANSLATE":
-          this.shape.x = this.x = evt.stageX - this.offset.x;
-          this.shape.y = this.y = evt.stageY - this.offset.y;
+          this.container.x = this.x = evt.stageX - this.offset.x;
+          this.container.y = this.y = evt.stageY - this.offset.y;
           update = true;
           break;
         case "ROTATE":
@@ -206,7 +209,7 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
           };
           let theta = (Math.atan2(vec.y, vec.x) /*- Math.PI/2*/ ) * 360 / (2*Math.PI);
           console.log(theta, vec.x, vec.y);
-          this.shape.rotation = this.rotation = theta;
+          this.rectangle.rotation = this.rotation = theta;
           update = true;
           break;
         case "SCALE":
@@ -220,8 +223,8 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
           let scaleMagnitude = Math.hypot(vec.x, vec.y) / Math.hypot(this.offset.x, this.offset.y);
 
 
-          this.shape.scaleX = scaleMagnitude;
-          this.shape.scaleY = aspect * scaleMagnitude;
+          this.rectangle.scaleX = scaleMagnitude;
+          this.rectangle.scaleY = aspect * scaleMagnitude;
           update=true;
           break;
       }

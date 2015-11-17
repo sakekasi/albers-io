@@ -20161,7 +20161,6 @@ var HTMLDOMPropertyConfig = {
     icon: null,
     id: MUST_USE_PROPERTY,
     inputMode: MUST_USE_ATTRIBUTE,
-    integrity: null,
     is: MUST_USE_ATTRIBUTE,
     keyParams: MUST_USE_ATTRIBUTE,
     keyType: MUST_USE_ATTRIBUTE,
@@ -23246,7 +23245,6 @@ var registrationNameModules = ReactBrowserEventEmitter.registrationNameModules;
 // For quickly matching children type, to test if can be treated as content.
 var CONTENT_TYPES = { 'string': true, 'number': true };
 
-var CHILDREN = keyOf({ children: null });
 var STYLE = keyOf({ style: null });
 var HTML = keyOf({ __html: null });
 
@@ -23737,9 +23735,7 @@ ReactDOMComponent.Mixin = {
         }
         var markup = null;
         if (this._tag != null && isCustomComponent(this._tag, props)) {
-          if (propKey !== CHILDREN) {
-            markup = DOMPropertyOperations.createMarkupForCustomAttribute(propKey, propValue);
-          }
+          markup = DOMPropertyOperations.createMarkupForCustomAttribute(propKey, propValue);
         } else {
           markup = DOMPropertyOperations.createMarkupForProperty(propKey, propValue);
         }
@@ -23998,9 +23994,6 @@ ReactDOMComponent.Mixin = {
       } else if (isCustomComponent(this._tag, nextProps)) {
         if (!node) {
           node = ReactMount.getNode(this._rootNodeID);
-        }
-        if (propKey === CHILDREN) {
-          nextProp = null;
         }
         DOMPropertyOperations.setValueForAttribute(node, propKey, nextProp);
       } else if (DOMProperty.properties[propKey] || DOMProperty.isCustomAttribute(propKey)) {
@@ -26695,12 +26688,11 @@ if (process.env.NODE_ENV !== 'production') {
     var fakeNode = document.createElement('react');
     ReactErrorUtils.invokeGuardedCallback = function (name, func, a, b) {
       var boundFunc = func.bind(null, a, b);
-      var evtType = 'react-' + name;
-      fakeNode.addEventListener(evtType, boundFunc, false);
+      fakeNode.addEventListener(name, boundFunc, false);
       var evt = document.createEvent('Event');
-      evt.initEvent(evtType, false, false);
+      evt.initEvent(name, false, false);
       fakeNode.dispatchEvent(evt);
-      fakeNode.removeEventListener(evtType, boundFunc, false);
+      fakeNode.removeEventListener(name, boundFunc, false);
     };
   }
 }
@@ -30881,7 +30873,7 @@ module.exports = ReactUpdates;
 
 'use strict';
 
-module.exports = '0.14.2';
+module.exports = '0.14.1';
 },{}],91:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -32918,7 +32910,7 @@ module.exports = adler32;
 var canDefineProperty = false;
 if (process.env.NODE_ENV !== 'production') {
   try {
-    Object.defineProperty({}, 'x', { get: function () {} });
+    Object.defineProperty({}, 'x', {});
     canDefineProperty = true;
   } catch (x) {
     // IE will fail on defineProperty
@@ -36219,7 +36211,7 @@ var Environment = (function (_React$Component) {
         return new EaselRectangle(rect);
       });
       shapes.forEach(function (s) {
-        _this.state.container.addChild(s.shape);
+        _this.state.container.addChild(s.container);
         // s.shape.cache();
       });
 
@@ -36248,10 +36240,10 @@ var Environment = (function (_React$Component) {
       }));
 
       added.forEach(function (_, key) {
-        _this2.state.container.addChild(shapes.get(key).shape);
+        _this2.state.container.addChild(shapes.get(key).container);
       });
       removed.forEach(function (_, key) {
-        _this2.state.container.removeChild(shapes.get(key).shape);
+        _this2.state.container.removeChild(shapes.get(key).container);
         shapes = shapes['delete'](key);
       });
 
@@ -36299,8 +36291,6 @@ exports.Rectangle = Rectangle;
 var EaselRectangle = (function (_Rectangle) {
   _inherits(EaselRectangle, _Rectangle);
 
-  //default, translate, rotate, scale
-
   function EaselRectangle(rect) {
     var _this3 = this;
 
@@ -36313,16 +36303,19 @@ var EaselRectangle = (function (_Rectangle) {
     this.center = null;
     this.origClick = null;
 
-    this.shape = new createjs.Shape();
+    this.container = new createjs.Container();
+    this.rectangle = new createjs.Shape();
+    this.container.addChild(this.rectangle);
 
-    this.shape.graphics.beginFill(this.color.hex()).drawRect(-this.w / 2, -this.h / 2, this.w, this.h).endFill();
+    this.rectangle.graphics.beginFill(this.color.hex()).drawRect(-this.w / 2, -this.h / 2, this.w, this.h).endFill();
 
-    this.shape.x = this.x;
-    this.shape.y = this.y;
-    this.shape.scaleX = this.shape.scaleY = this.scale;
-    this.shape.rotation = this.rotation;
+    //don't know how sensible it is to maintain parallel variables
+    this.container.x = this.x;
+    this.container.y = this.y;
+    this.rectangle.scaleX = this.rectangle.scaleY = this.scale;
+    this.rectangle.rotation = this.rotation;
 
-    this.shape.on("mousedown", function (evt) {
+    this.rectangle.on("mousedown", function (evt) {
       console.log("mousedown", evt);
       if (evt.nativeEvent.button === 0) {
         //LEFT CLICK
@@ -36334,26 +36327,26 @@ var EaselRectangle = (function (_Rectangle) {
           _this3.state = "TRANSLATE";
         }
 
-        _this3.center = { x: _this3.shape.x,
-          y: _this3.shape.y };
-        _this3.offset = { x: evt.stageX - _this3.shape.x, y: evt.stageY - _this3.shape.y };
+        _this3.center = { x: _this3.container.x,
+          y: _this3.container.y };
+        _this3.offset = { x: evt.stageX - _this3.container.x, y: evt.stageY - _this3.container.y };
         _this3.origClick = { x: evt.stageX, y: evt.stageY };
       } else if (evt.nativeEvent.button === 2) {//RIGHT CLICK
 
       }
     });
 
-    this.shape.on("mouseup", function (evt) {
+    this.rectangle.on("mouseup", function (evt) {
       console.log("mousedown", evt);
       _this3.state = "DEFAULT";
     });
 
-    this.shape.on("pressmove", function (evt) {
+    this.rectangle.on("pressmove", function (evt) {
       //console.log("pressmove", evt);
       switch (_this3.state) {
         case "TRANSLATE":
-          _this3.shape.x = _this3.x = evt.stageX - _this3.offset.x;
-          _this3.shape.y = _this3.y = evt.stageY - _this3.offset.y;
+          _this3.container.x = _this3.x = evt.stageX - _this3.offset.x;
+          _this3.container.y = _this3.y = evt.stageY - _this3.offset.y;
           update = true;
           break;
         case "ROTATE":
@@ -36363,7 +36356,7 @@ var EaselRectangle = (function (_Rectangle) {
           };
           var theta = Math.atan2(vec.y, vec.x) /*- Math.PI/2*/ * 360 / (2 * Math.PI);
           console.log(theta, vec.x, vec.y);
-          _this3.shape.rotation = _this3.rotation = theta;
+          _this3.rectangle.rotation = _this3.rotation = theta;
           update = true;
           break;
         case "SCALE":
@@ -36376,8 +36369,8 @@ var EaselRectangle = (function (_Rectangle) {
           //amount to scale determined by dividing magnitude
           var scaleMagnitude = Math.hypot(vec.x, vec.y) / Math.hypot(_this3.offset.x, _this3.offset.y);
 
-          _this3.shape.scaleX = scaleMagnitude;
-          _this3.shape.scaleY = aspect * scaleMagnitude;
+          _this3.rectangle.scaleX = scaleMagnitude;
+          _this3.rectangle.scaleY = aspect * scaleMagnitude;
           update = true;
           break;
       }
