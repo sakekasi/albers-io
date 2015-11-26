@@ -180,10 +180,21 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
           this.state = "TRANSLATE";
         }
 
-        this.center = {x: this.container.x,
-                       y: this.container.y}
-        this.offset = {x: evt.stageX - this.container.x, y: evt.stageY - this.container.y};
-        this.origClick = {x: evt.stageX, y: evt.stageY};
+        this.original = {
+          centerVector: {
+            x: this.container.x,
+            y: this.container.y
+          },
+          offsetVector: {
+            x: evt.stageX - this.container.x,
+            y: evt.stageY - this.container.y
+          },
+          clickVector: {
+            x: evt.stageX,
+            y: evt.stageY
+          },
+          scaleMagnitude: this.rectangle.scaleX
+        };
       } else if(evt.nativeEvent.button === 2){ //RIGHT CLICK
 
       }
@@ -198,33 +209,44 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
       //console.log("pressmove", evt);
       switch(this.state){
         case "TRANSLATE":
-          this.container.x = this.x = evt.stageX - this.offset.x;
-          this.container.y = this.y = evt.stageY - this.offset.y;
+          this.container.x = this.x = evt.stageX - this.original.offsetVector.x;
+          this.container.y = this.y = evt.stageY - this.original.offsetVector.y;
           update = true;
           break;
         case "ROTATE":
           let vec = {
-            x: evt.stageX - this.center.x, //this is wrong. we need the rectangle's "center"
-            y: evt.stageY - this.center.y
+            x: evt.stageX - this.original.centerVector.x,
+            y: evt.stageY - this.original.centerVector.y
           };
-          let theta = (Math.atan2(vec.y, vec.x) /*- Math.PI/2*/ ) * 360 / (2*Math.PI);
-          console.log(theta, vec.x, vec.y);
+          let theta = degrees(Math.atan2(vec.y, vec.x));
           this.rectangle.rotation = this.rotation = theta;
           update = true;
           break;
         case "SCALE":
           vec = {
-            x: evt.stageX - this.center.x,
-            y: evt.stageY - this.center.y
+            x: evt.stageX - this.original.centerVector.x,
+            y: evt.stageY - this.original.centerVector.y
           };
           //aspect ratio determined by y/x of vec
           let aspect = vec.y / vec.x; //wrong behaviour
           //amount to scale determined by dividing magnitude
-          let scaleMagnitude = Math.hypot(vec.x, vec.y) / Math.hypot(this.offset.x, this.offset.y);
+          let scaleMagnitude =  this.original.scaleMagnitude * (Math.hypot(vec.x, vec.y) /
+                                Math.hypot(this.original.offsetVector.x, this.original.offsetVector.y));
 
 
           this.rectangle.scaleX = scaleMagnitude;
           this.rectangle.scaleY = aspect * scaleMagnitude;
+          // console.log({x: this.container.x, y: this.container.y}, this.rectangle.rotation);
+          console.log(
+            bounding_box(
+              {x: this.container.x, y: this.container.y},
+              {w: this.w, h: this.h},
+              this.rectangle.rotation,
+              this.rectangle.scaleX,
+              this.rectangle.scaleY
+            )
+          );
+          // console.log(this.rectangle.getBounds());
           update=true;
           break;
       }
@@ -239,4 +261,25 @@ function degrees(radians: number){
 
 function radians(degrees: number){
   return degrees / 180 * Math.PI;
+}
+
+function bounding_box(center, dims, rotation, scaleX, scaleY){
+  let xformed = xform(center, dims, rotation, scaleX, scaleY);
+  let x1= xformed.map((p) => p.x).reduce((a, b)=> a < b? a: b);
+  let y1= xformed.map((p) => p.y).reduce((a, b)=> a < b? a: b);
+  let x2= xformed.map((p) => p.x).reduce((a, b)=> a > b? a: b);
+  let y2= xformed.map((p) => p.y).reduce((a, b)=> a > b? a: b);
+  return {
+    x: x1, y: y1, w: x2-x1, h: y2-y1
+  };
+}
+
+//transforms rotated and scaled coords back to original coords
+function xformToCanvas({x: x0, y: y0}, {x, y}, rotation, scaleX, scaleY){
+  x *= scaleX;
+  y *= scaleY;
+  return {
+    x: x0 + x*Math.cos(radians(rotation))+ y*Math.sin(radians(rotation)),
+    y: y0 + x*Math.sin(radians(rotation))+ y*Math.cos(radians(rotation))
+  };
 }

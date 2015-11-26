@@ -36104,6 +36104,8 @@ Object.defineProperty(exports, '__esModule', {
   value: true
 });
 
+var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i['return']) _i['return'](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError('Invalid attempt to destructure non-iterable instance'); } }; })();
+
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
@@ -36327,10 +36329,21 @@ var EaselRectangle = (function (_Rectangle) {
           _this3.state = "TRANSLATE";
         }
 
-        _this3.center = { x: _this3.container.x,
-          y: _this3.container.y };
-        _this3.offset = { x: evt.stageX - _this3.container.x, y: evt.stageY - _this3.container.y };
-        _this3.origClick = { x: evt.stageX, y: evt.stageY };
+        _this3.original = {
+          centerVector: {
+            x: _this3.container.x,
+            y: _this3.container.y
+          },
+          offsetVector: {
+            x: evt.stageX - _this3.container.x,
+            y: evt.stageY - _this3.container.y
+          },
+          clickVector: {
+            x: evt.stageX,
+            y: evt.stageY
+          },
+          scaleMagnitude: _this3.rectangle.scaleX
+        };
       } else if (evt.nativeEvent.button === 2) {//RIGHT CLICK
 
       }
@@ -36345,32 +36358,34 @@ var EaselRectangle = (function (_Rectangle) {
       //console.log("pressmove", evt);
       switch (_this3.state) {
         case "TRANSLATE":
-          _this3.container.x = _this3.x = evt.stageX - _this3.offset.x;
-          _this3.container.y = _this3.y = evt.stageY - _this3.offset.y;
+          _this3.container.x = _this3.x = evt.stageX - _this3.original.offsetVector.x;
+          _this3.container.y = _this3.y = evt.stageY - _this3.original.offsetVector.y;
           update = true;
           break;
         case "ROTATE":
           var vec = {
-            x: evt.stageX - _this3.center.x, //this is wrong. we need the rectangle's "center"
-            y: evt.stageY - _this3.center.y
+            x: evt.stageX - _this3.original.centerVector.x,
+            y: evt.stageY - _this3.original.centerVector.y
           };
-          var theta = Math.atan2(vec.y, vec.x) /*- Math.PI/2*/ * 360 / (2 * Math.PI);
-          console.log(theta, vec.x, vec.y);
+          var theta = degrees(Math.atan2(vec.y, vec.x));
           _this3.rectangle.rotation = _this3.rotation = theta;
           update = true;
           break;
         case "SCALE":
           vec = {
-            x: evt.stageX - _this3.center.x,
-            y: evt.stageY - _this3.center.y
+            x: evt.stageX - _this3.original.centerVector.x,
+            y: evt.stageY - _this3.original.centerVector.y
           };
           //aspect ratio determined by y/x of vec
           var aspect = vec.y / vec.x; //wrong behaviour
           //amount to scale determined by dividing magnitude
-          var scaleMagnitude = Math.hypot(vec.x, vec.y) / Math.hypot(_this3.offset.x, _this3.offset.y);
+          var scaleMagnitude = _this3.original.scaleMagnitude * (Math.hypot(vec.x, vec.y) / Math.hypot(_this3.original.offsetVector.x, _this3.original.offsetVector.y));
 
           _this3.rectangle.scaleX = scaleMagnitude;
           _this3.rectangle.scaleY = aspect * scaleMagnitude;
+          // console.log({x: this.container.x, y: this.container.y}, this.rectangle.rotation);
+          console.log(bounding_box({ x: _this3.container.x, y: _this3.container.y }, { w: _this3.w, h: _this3.h }, _this3.rectangle.rotation, _this3.rectangle.scaleX, _this3.rectangle.scaleY));
+          // console.log(this.rectangle.getBounds());
           update = true;
           break;
       }
@@ -36386,6 +36401,55 @@ function degrees(radians) {
 
 function radians(degrees) {
   return degrees / 180 * Math.PI;
+}
+
+function bounding_box(center, dims, rotation, scaleX, scaleY) {
+  var xformed = xform(center, dims, rotation, scaleX, scaleY);
+  var x1 = xformed.map(function (p) {
+    return p.x;
+  }).reduce(function (a, b) {
+    return a < b ? a : b;
+  });
+  var y1 = xformed.map(function (p) {
+    return p.y;
+  }).reduce(function (a, b) {
+    return a < b ? a : b;
+  });
+  var x2 = xformed.map(function (p) {
+    return p.x;
+  }).reduce(function (a, b) {
+    return a > b ? a : b;
+  });
+  var y2 = xformed.map(function (p) {
+    return p.y;
+  }).reduce(function (a, b) {
+    return a > b ? a : b;
+  });
+  return {
+    x: x1, y: y1, w: x2 - x1, h: y2 - y1
+  };
+}
+
+//transforms rotated and scaled coords back to original coords
+function xform(_ref, _ref2, rotation, scaleX, scaleY) {
+  var x0 = _ref.x;
+  var y0 = _ref.y;
+  var w = _ref2.w;
+  var h = _ref2.h;
+
+  w *= scaleX;
+  h *= scaleY;
+  return [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(function (_ref3) {
+    var _ref32 = _slicedToArray(_ref3, 2);
+
+    var mx = _ref32[0];
+    var my = _ref32[1];
+
+    return {
+      x: x0 + mx * (w / 2) * Math.cos(radians(rotation)) + mx * (h / 2) * Math.sin(radians(rotation)),
+      y: y0 + my * (w / 2) * Math.sin(radians(rotation)) + my * (h / 2) * Math.cos(radians(rotation))
+    };
+  });
 }
 //outside folks don't know about this one
 
