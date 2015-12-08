@@ -266,7 +266,7 @@ class EaselRectangle { //outside folks don't know about this one
     });
 
     this.rectangle.on("pressmove", (evt) => {
-      //console.log("pressmove", evt);
+      console.log("pressmove", evt);
       switch(this.state){
         case "TRANSLATE":
           this.x = evt.stageX - this.original.offsetVector.x;
@@ -294,15 +294,15 @@ class EaselRectangle { //outside folks don't know about this one
 
           this.w = newWidth;
           this.h = aspect * newWidth;
-          // console.log(
-          //   bounding_box(
-          //     {x: this.container.x, y: this.container.y},
-          //     {w: this.w, h: this.h},
-          //     this.rectangle.rotation,
-          //     this.rectangle.scaleX,
-          //     this.rectangle.scaleY
-          //   )
-          // );
+          console.log(
+            bounding_box(
+              {x: this.x, y: this.y},
+              {w: this.w, h: this.h},
+              this.rotation,
+              this.rectangle.scaleX,
+              this.rectangle.scaleY
+            )
+          );
           break;
       }
       this.environment.setState({
