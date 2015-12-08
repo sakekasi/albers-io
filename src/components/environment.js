@@ -40,8 +40,8 @@ export class Environment extends React.Component {
     let style = {left: horizontalMargin, top: verticalMargin};
     return (
       <canvas ref="canvas" style={style}
-              onKeyDown={this.keyDown.bind(this)}
-              onKeyUp={this.keyUp.bind(this)}
+              // onKeyDown={this.keyDown.bind(this)}
+              // onKeyUp={this.keyUp.bind(this)}
               width={this.props.width}
               height={this.props.height}></canvas>
     );
@@ -137,46 +137,89 @@ export class Rectangle {
 
 }
 
-class EaselRectangle extends Rectangle { //outside folks don't know about this one
+class EaselRectangle { //outside folks don't know about this one
   rectangle: createjs.Shape;
   state: string;
   original: ?Object;
   container: ?Object;
+  delegate: ?Object;
   environment: Environment;
 
+  get x(){
+    return this.delegate.x;
+  }
   set x(newX){
-    this.x = newX;
     this.container.x = newX;
+    this.delegate.x = newX;
   }
 
+  get y(){
+    return this.delegate.y;
+  }
   set y(newY){
-    this.y = newY;
     this.container.y = newY;
+    this.delegate.y = newY;
   }
 
+  get w(){
+    return this.delegate.w;
+  }
   set w(newW){
-    this.w = newW;
     this.rectangle.scaleX = newW/100;
+    this.delegate.w = newW;
   }
 
+  get h(){
+    return this.delegate.h;
+  }
   set h(newH){
-    this.h = newH;
     this.rectangle.scaleY = newH/100;
+    this.delegate.h = newH;
   }
 
+  get rotation(){
+    return this.delegate.rotation;
+  }
   set rotation(newRotation){
-    this.rotation = newRotation;
     this.rectangle.rotation = newRotation;
+    this.delegate.rotation = newRotation;
+  }
+
+  get container(){
+    if(!this.hasOwnProperty("_container")){
+      this._container = new createjs.Container();
+    }
+    return this._container;
+  }
+  set container(newContainer){
+    this._container = newContainer;
+  }
+
+  get rectangle(){
+    if(!this.hasOwnProperty("_rectangle")){
+      this._rectangle = new createjs.Shape();
+      this.container.addChild(this._rectangle);
+    }
+    return this._rectangle;
+  }
+  set rectangle(newRectangle){
+    this._rectangle = newRectangle;
   }
 
   constructor(rect, environment){
-    this.container = new createjs.Container();
-    this.rectangle = new createjs.Shape();
-    this.container.addChild(this.rectangle);
-    this.rectangle.graphics.beginFill(rect.color.hex()).drawRect(-50, -50, 50, 50).endFill();
+    // this.container = new createjs.Container();
+    // this.rectangle = new createjs.Shape();
+    // this.container.addChild(this.rectangle);
+    // super(rect.x, rect.y, rect.w, rect.h, rect.color);
+    this.delegate = rect;
     this.environment = environment;
+    this.rectangle.graphics.beginFill(this.delegate.color.hex()).drawRect(-50, -50, 100, 100).endFill();
 
-    super(rect.x, rect.y, rect.w, rect.h, rect.color);
+    //setup initial mapping
+    this.x = this.x;
+    this.y = this.y;
+    this.w = this.w;
+    this.h = this.h;
 
     this.state = "DEFAULT";
 
@@ -228,7 +271,6 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
         case "TRANSLATE":
           this.x = evt.stageX - this.original.offsetVector.x;
           this.y = evt.stageY - this.original.offsetVector.y;
-          update = true;
           break;
         case "ROTATE":
           let vec = {
@@ -237,7 +279,6 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
           };
           let theta = degrees(Math.atan2(vec.y, vec.x));
           this.rotation = theta;
-          update = true;
           break;
         case "SCALE":
           vec = {
@@ -253,20 +294,20 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
 
           this.w = newWidth;
           this.h = aspect * newWidth;
-          console.log(
-            bounding_box(
-              {x: this.container.x, y: this.container.y},
-              {w: this.w, h: this.h},
-              this.rectangle.rotation,
-              this.rectangle.scaleX,
-              this.rectangle.scaleY
-            )
-          );
-          this.environment.setState({
-            update: true
-          });
+          // console.log(
+          //   bounding_box(
+          //     {x: this.container.x, y: this.container.y},
+          //     {w: this.w, h: this.h},
+          //     this.rectangle.rotation,
+          //     this.rectangle.scaleX,
+          //     this.rectangle.scaleY
+          //   )
+          // );
           break;
       }
+      this.environment.setState({
+        update: true
+      });
     });
   }
 }

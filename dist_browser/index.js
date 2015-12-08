@@ -20161,6 +20161,7 @@ var HTMLDOMPropertyConfig = {
     icon: null,
     id: MUST_USE_PROPERTY,
     inputMode: MUST_USE_ATTRIBUTE,
+    integrity: null,
     is: MUST_USE_ATTRIBUTE,
     keyParams: MUST_USE_ATTRIBUTE,
     keyType: MUST_USE_ATTRIBUTE,
@@ -23245,6 +23246,7 @@ var registrationNameModules = ReactBrowserEventEmitter.registrationNameModules;
 // For quickly matching children type, to test if can be treated as content.
 var CONTENT_TYPES = { 'string': true, 'number': true };
 
+var CHILDREN = keyOf({ children: null });
 var STYLE = keyOf({ style: null });
 var HTML = keyOf({ __html: null });
 
@@ -23735,7 +23737,9 @@ ReactDOMComponent.Mixin = {
         }
         var markup = null;
         if (this._tag != null && isCustomComponent(this._tag, props)) {
-          markup = DOMPropertyOperations.createMarkupForCustomAttribute(propKey, propValue);
+          if (propKey !== CHILDREN) {
+            markup = DOMPropertyOperations.createMarkupForCustomAttribute(propKey, propValue);
+          }
         } else {
           markup = DOMPropertyOperations.createMarkupForProperty(propKey, propValue);
         }
@@ -23994,6 +23998,9 @@ ReactDOMComponent.Mixin = {
       } else if (isCustomComponent(this._tag, nextProps)) {
         if (!node) {
           node = ReactMount.getNode(this._rootNodeID);
+        }
+        if (propKey === CHILDREN) {
+          nextProp = null;
         }
         DOMPropertyOperations.setValueForAttribute(node, propKey, nextProp);
       } else if (DOMProperty.properties[propKey] || DOMProperty.isCustomAttribute(propKey)) {
@@ -26688,11 +26695,12 @@ if (process.env.NODE_ENV !== 'production') {
     var fakeNode = document.createElement('react');
     ReactErrorUtils.invokeGuardedCallback = function (name, func, a, b) {
       var boundFunc = func.bind(null, a, b);
-      fakeNode.addEventListener(name, boundFunc, false);
+      var evtType = 'react-' + name;
+      fakeNode.addEventListener(evtType, boundFunc, false);
       var evt = document.createEvent('Event');
-      evt.initEvent(name, false, false);
+      evt.initEvent(evtType, false, false);
       fakeNode.dispatchEvent(evt);
-      fakeNode.removeEventListener(name, boundFunc, false);
+      fakeNode.removeEventListener(evtType, boundFunc, false);
     };
   }
 }
@@ -30873,7 +30881,7 @@ module.exports = ReactUpdates;
 
 'use strict';
 
-module.exports = '0.14.1';
+module.exports = '0.14.2';
 },{}],91:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -32910,7 +32918,7 @@ module.exports = adler32;
 var canDefineProperty = false;
 if (process.env.NODE_ENV !== 'production') {
   try {
-    Object.defineProperty({}, 'x', {});
+    Object.defineProperty({}, 'x', { get: function () {} });
     canDefineProperty = true;
   } catch (x) {
     // IE will fail on defineProperty
@@ -36104,8 +36112,6 @@ Object.defineProperty(exports, '__esModule', {
   value: true
 });
 
-var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i['return']) _i['return'](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError('Invalid attempt to destructure non-iterable instance'); } }; })();
-
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
@@ -36163,7 +36169,8 @@ var Environment = (function (_React$Component) {
     this.state = {
       shapes: new _immutable.Map(),
       stage: null,
-      container: new createjs.Container()
+      container: new createjs.Container(),
+      update: false
     };
   }
 
@@ -36181,20 +36188,10 @@ var Environment = (function (_React$Component) {
       var verticalMargin = ((0, _jquery2['default'])('body').height() - this.props.height) / 2;
       var style = { left: horizontalMargin, top: verticalMargin };
       return _react2['default'].createElement('canvas', { ref: 'canvas', style: style,
-        onKeyDown: this.keyDown.bind(this),
-        onKeyUp: this.keyUp.bind(this),
+        // onKeyDown={this.keyDown.bind(this)}
+        // onKeyUp={this.keyUp.bind(this)}
         width: this.props.width,
         height: this.props.height });
-    }
-  }, {
-    key: 'keyDown',
-    value: function keyDown(event) {
-      console.log(e.type, e.which, e.timeStamp);
-    }
-  }, {
-    key: 'keyUp',
-    value: function keyUp(event) {
-      console.log(e.type, e.which, e.timeStamp);
     }
   }, {
     key: 'componentDidMount',
@@ -36210,17 +36207,17 @@ var Environment = (function (_React$Component) {
       stage.mouseMoveOutside = true;
 
       var shapes = this.props.rectangles.map(function (rect) {
-        return new EaselRectangle(rect);
+        return new EaselRectangle(rect, _this);
       });
       shapes.forEach(function (s) {
         _this.state.container.addChild(s.container);
         // s.shape.cache();
       });
 
-      update = true;
       createjs.Ticker.addEventListener("tick", this.tick.bind(this));
       this.setState({
-        stage: stage, shapes: shapes
+        stage: stage, shapes: shapes,
+        update: true
       });
     }
   }, {
@@ -36238,7 +36235,7 @@ var Environment = (function (_React$Component) {
       });
 
       var shapes = this.state.shapes.merge(added.map(function (rect) {
-        return new EaselRectangle(rect);
+        return new EaselRectangle(rect, _this2);
       }));
 
       added.forEach(function (_, key) {
@@ -36249,9 +36246,9 @@ var Environment = (function (_React$Component) {
         shapes = shapes['delete'](key);
       });
 
-      update = true;
       this.setState({
-        shapes: shapes
+        shapes: shapes,
+        update: true
       });
     }
   }, {
@@ -36262,9 +36259,11 @@ var Environment = (function (_React$Component) {
   }, {
     key: 'tick',
     value: function tick(event) {
-      if (update) {
-        update = false;
+      if (this.state.update) {
         this.state.stage.update();
+        this.setState({
+          update: false
+        });
       }
     }
   }]);
@@ -36279,43 +36278,115 @@ var Rectangle = function Rectangle(x, y, w, h, color) {
 
   this.x = x;
   this.y = y;
+
   this.w = w;
   this.h = h;
 
   this.color = color;
 
-  this.scale = 1;
+  // this.scale = 1;
   this.rotation = 0; //Math.random()*50-25;
 };
 
 exports.Rectangle = Rectangle;
 
-var EaselRectangle = (function (_Rectangle) {
-  _inherits(EaselRectangle, _Rectangle);
+var EaselRectangle = (function () {
+  _createClass(EaselRectangle, [{
+    key: 'x',
+    get: function get() {
+      return this.delegate.x;
+    },
+    set: function set(newX) {
+      this.container.x = newX;
+      this.delegate.x = newX;
+    }
+  }, {
+    key: 'y',
+    get: function get() {
+      return this.delegate.y;
+    },
+    set: function set(newY) {
+      this.container.y = newY;
+      this.delegate.y = newY;
+    }
+  }, {
+    key: 'w',
+    get: function get() {
+      return this.delegate.w;
+    },
+    set: function set(newW) {
+      this.rectangle.scaleX = newW / 100;
+      this.delegate.w = newW;
+    }
+  }, {
+    key: 'h',
+    get: function get() {
+      return this.delegate.h;
+    },
+    set: function set(newH) {
+      this.rectangle.scaleY = newH / 100;
+      this.delegate.h = newH;
+    }
+  }, {
+    key: 'rotation',
+    get: function get() {
+      return this.delegate.rotation;
+    },
+    set: function set(newRotation) {
+      this.rectangle.rotation = newRotation;
+      this.delegate.rotation = newRotation;
+    }
+  }, {
+    key: 'container',
+    get: function get() {
+      if (!this.hasOwnProperty("_container")) {
+        this._container = new createjs.Container();
+      }
+      return this._container;
+    },
+    set: function set(newContainer) {
+      this._container = newContainer;
+    }
+  }, {
+    key: 'rectangle',
+    get: function get() {
+      if (!this.hasOwnProperty("_rectangle")) {
+        this._rectangle = new createjs.Shape();
+        this.container.addChild(this._rectangle);
+      }
+      return this._rectangle;
+    },
+    set: function set(newRectangle) {
+      this._rectangle = newRectangle;
+    }
+  }]);
 
-  function EaselRectangle(rect) {
+  function EaselRectangle(rect, environment) {
     var _this3 = this;
 
     _classCallCheck(this, EaselRectangle);
 
-    _get(Object.getPrototypeOf(EaselRectangle.prototype), 'constructor', this).call(this, rect.x, rect.y, rect.w, rect.h, rect.color);
+    // this.container = new createjs.Container();
+    // this.rectangle = new createjs.Shape();
+    // this.container.addChild(this.rectangle);
+    // super(rect.x, rect.y, rect.w, rect.h, rect.color);
+    this.delegate = rect;
+    this.environment = environment;
+    this.rectangle.graphics.beginFill(this.delegate.color.hex()).drawRect(-50, -50, 100, 100).endFill();
+
+    //setup initial mapping
+    this.x = this.x;
+    this.y = this.y;
+    this.w = this.w;
+    this.h = this.h;
 
     this.state = "DEFAULT";
-    this.offset = null;
-    this.center = null;
-    this.origClick = null;
-
-    this.container = new createjs.Container();
-    this.rectangle = new createjs.Shape();
-    this.container.addChild(this.rectangle);
-
-    this.rectangle.graphics.beginFill(this.color.hex()).drawRect(-this.w / 2, -this.h / 2, this.w, this.h).endFill();
 
     //don't know how sensible it is to maintain parallel variables
-    this.container.x = this.x;
-    this.container.y = this.y;
-    this.rectangle.scaleX = this.rectangle.scaleY = this.scale;
-    this.rectangle.rotation = this.rotation;
+    // this.container.x = this.x;
+    // this.container.y = this.y;
+    // this.rectangle.scaleX = this.rectangle.scaleY = this.scale;
+    // this.rectangle.rotation = this.rotation;
 
     this.rectangle.on("mousedown", function (evt) {
       console.log("mousedown", evt);
@@ -36331,18 +36402,18 @@ var EaselRectangle = (function (_Rectangle) {
 
         _this3.original = {
           centerVector: {
-            x: _this3.container.x,
-            y: _this3.container.y
+            x: _this3.x,
+            y: _this3.y
           },
           offsetVector: {
-            x: evt.stageX - _this3.container.x,
-            y: evt.stageY - _this3.container.y
+            x: evt.stageX - _this3.x,
+            y: evt.stageY - _this3.y
           },
           clickVector: {
             x: evt.stageX,
             y: evt.stageY
           },
-          scaleMagnitude: _this3.rectangle.scaleX
+          width: _this3.w
         };
       } else if (evt.nativeEvent.button === 2) {//RIGHT CLICK
 
@@ -36358,9 +36429,8 @@ var EaselRectangle = (function (_Rectangle) {
       //console.log("pressmove", evt);
       switch (_this3.state) {
         case "TRANSLATE":
-          _this3.container.x = _this3.x = evt.stageX - _this3.original.offsetVector.x;
-          _this3.container.y = _this3.y = evt.stageY - _this3.original.offsetVector.y;
-          update = true;
+          _this3.x = evt.stageX - _this3.original.offsetVector.x;
+          _this3.y = evt.stageY - _this3.original.offsetVector.y;
           break;
         case "ROTATE":
           var vec = {
@@ -36368,8 +36438,7 @@ var EaselRectangle = (function (_Rectangle) {
             y: evt.stageY - _this3.original.centerVector.y
           };
           var theta = degrees(Math.atan2(vec.y, vec.x));
-          _this3.rectangle.rotation = _this3.rotation = theta;
-          update = true;
+          _this3.rotation = theta;
           break;
         case "SCALE":
           vec = {
@@ -36377,23 +36446,31 @@ var EaselRectangle = (function (_Rectangle) {
             y: evt.stageY - _this3.original.centerVector.y
           };
           //aspect ratio determined by y/x of vec
-          var aspect = vec.y / vec.x; //wrong behaviour
+          var aspect = vec.y / vec.x;
           //amount to scale determined by dividing magnitude
-          var scaleMagnitude = _this3.original.scaleMagnitude * (Math.hypot(vec.x, vec.y) / Math.hypot(_this3.original.offsetVector.x, _this3.original.offsetVector.y));
+          var newWidth = _this3.original.width * (Math.hypot(vec.x, vec.y) / Math.hypot(_this3.original.offsetVector.x, _this3.original.offsetVector.y));
 
-          _this3.rectangle.scaleX = scaleMagnitude;
-          _this3.rectangle.scaleY = aspect * scaleMagnitude;
-          // console.log({x: this.container.x, y: this.container.y}, this.rectangle.rotation);
-          console.log(bounding_box({ x: _this3.container.x, y: _this3.container.y }, { w: _this3.w, h: _this3.h }, _this3.rectangle.rotation, _this3.rectangle.scaleX, _this3.rectangle.scaleY));
-          // console.log(this.rectangle.getBounds());
-          update = true;
+          _this3.w = newWidth;
+          _this3.h = aspect * newWidth;
+          // console.log(
+          //   bounding_box(
+          //     {x: this.container.x, y: this.container.y},
+          //     {w: this.w, h: this.h},
+          //     this.rectangle.rotation,
+          //     this.rectangle.scaleX,
+          //     this.rectangle.scaleY
+          //   )
+          // );
           break;
       }
+      _this3.environment.setState({
+        update: true
+      });
     });
   }
 
   return EaselRectangle;
-})(Rectangle);
+})();
 
 function degrees(radians) {
   return radians / Math.PI * 180;
@@ -36431,26 +36508,21 @@ function bounding_box(center, dims, rotation, scaleX, scaleY) {
 }
 
 //transforms rotated and scaled coords back to original coords
-function xform(_ref, _ref2, rotation, scaleX, scaleY) {
+function xformToCanvas(_ref, _ref2, rotation, scaleX, scaleY) {
   var x0 = _ref.x;
   var y0 = _ref.y;
-  var w = _ref2.w;
-  var h = _ref2.h;
+  var x = _ref2.x;
+  var y = _ref2.y;
 
-  w *= scaleX;
-  h *= scaleY;
-  return [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(function (_ref3) {
-    var _ref32 = _slicedToArray(_ref3, 2);
-
-    var mx = _ref32[0];
-    var my = _ref32[1];
-
-    return {
-      x: x0 + mx * (w / 2) * Math.cos(radians(rotation)) + mx * (h / 2) * Math.sin(radians(rotation)),
-      y: y0 + my * (w / 2) * Math.sin(radians(rotation)) + my * (h / 2) * Math.cos(radians(rotation))
-    };
-  });
+  x *= scaleX;
+  y *= scaleY;
+  return {
+    x: x0 + x * Math.cos(radians(rotation)) + y * Math.sin(radians(rotation)),
+    y: y0 + x * Math.sin(radians(rotation)) + y * Math.cos(radians(rotation))
+  };
 }
+
+// scale: number;
 //outside folks don't know about this one
 
 },{"immutable":3,"jquery":4,"react":162,"react-dom":5,"react-immutable-proptypes":6}],166:[function(require,module,exports){
