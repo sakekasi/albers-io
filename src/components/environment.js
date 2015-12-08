@@ -29,7 +29,8 @@ export class Environment extends React.Component {
     this.state = {
       shapes: new Map(),
       stage: null,
-      container: new createjs.Container()
+      container: new createjs.Container(),
+      update: false
     }
   }
 
@@ -46,14 +47,6 @@ export class Environment extends React.Component {
     );
   }
 
-  keyDown(event){
-    console.log(e.type, e.which, e.timeStamp);
-  }
-
-  keyUp(event){
-    console.log(e.type, e.which, e.timeStamp);
-  }
-
   componentDidMount(){
     let canvas = ReactDOM.findDOMNode(this.refs.canvas);
     let stage = new createjs.Stage(canvas);
@@ -64,16 +57,16 @@ export class Environment extends React.Component {
     stage.mouseMoveOutside = true;
 
 
-    let shapes = this.props.rectangles.map(rect => new EaselRectangle(rect));
+    let shapes = this.props.rectangles.map(rect => new EaselRectangle(rect, this));
     shapes.forEach(s => {
       this.state.container.addChild(s.container);
       // s.shape.cache();
     });
 
-    update = true;
     createjs.Ticker.addEventListener("tick", this.tick.bind(this));
     this.setState({
-      stage, shapes
+      stage, shapes,
+      update: true
     });
   }
 
@@ -83,7 +76,7 @@ export class Environment extends React.Component {
     removed = this.state.shapes.filter((_, key) => !nextProps.rectangles.has(key));
 
     let shapes = this.state.shapes.merge(
-      added.map(rect => new EaselRectangle(rect))
+      added.map(rect => new EaselRectangle(rect, this))
     );
 
     added.forEach((_, key) => {
@@ -94,9 +87,9 @@ export class Environment extends React.Component {
       shapes = shapes.delete(key);
     });
 
-    update = true;
     this.setState({
-      shapes
+      shapes,
+      update: true
     });
   }
 
@@ -105,9 +98,11 @@ export class Environment extends React.Component {
   }
 
   tick(event){
-    if(update){
-      update = false;
+    if(this.state.update){
       this.state.stage.update();
+      this.setState({
+        update: false
+      });
     }
   }
 }
@@ -123,19 +118,20 @@ export class Rectangle {
   y: number;
   w: number;
   h: number;
-  scale: number;
+  // scale: number;
   rotation: number;
   color: Color;
 
   constructor(x, y, w, h, color){
     this.x = x;
     this.y = y;
+
     this.w = w;
     this.h = h;
 
     this.color = color;
 
-    this.scale = 1;
+    // this.scale = 1;
     this.rotation = 0;//Math.random()*50-25;
   }
 
@@ -144,30 +140,51 @@ export class Rectangle {
 class EaselRectangle extends Rectangle { //outside folks don't know about this one
   rectangle: createjs.Shape;
   state: string;
-  offset: ?object;
-  center: ?object;
-  origClick: ?object;
-  container: ?object;
+  original: ?Object;
+  container: ?Object;
+  environment: Environment;
 
-  constructor(rect){
-    super(rect.x, rect.y, rect.w, rect.h, rect.color);
+  set x(newX){
+    this.x = newX;
+    this.container.x = newX;
+  }
 
-    this.state = "DEFAULT";
-    this.offset = null;
-    this.center = null;
-    this.origClick = null;
+  set y(newY){
+    this.y = newY;
+    this.container.y = newY;
+  }
 
+  set w(newW){
+    this.w = newW;
+    this.rectangle.scaleX = newW/100;
+  }
+
+  set h(newH){
+    this.h = newH;
+    this.rectangle.scaleY = newH/100;
+  }
+
+  set rotation(newRotation){
+    this.rotation = newRotation;
+    this.rectangle.rotation = newRotation;
+  }
+
+  constructor(rect, environment){
     this.container = new createjs.Container();
     this.rectangle = new createjs.Shape();
     this.container.addChild(this.rectangle);
+    this.rectangle.graphics.beginFill(rect.color.hex()).drawRect(-50, -50, 50, 50).endFill();
+    this.environment = environment;
 
-    this.rectangle.graphics.beginFill(this.color.hex()).drawRect(-this.w/2, -this.h/2, this.w, this.h).endFill();
+    super(rect.x, rect.y, rect.w, rect.h, rect.color);
+
+    this.state = "DEFAULT";
 
     //don't know how sensible it is to maintain parallel variables
-    this.container.x = this.x;
-    this.container.y = this.y;
-    this.rectangle.scaleX = this.rectangle.scaleY = this.scale;
-    this.rectangle.rotation = this.rotation;
+    // this.container.x = this.x;
+    // this.container.y = this.y;
+    // this.rectangle.scaleX = this.rectangle.scaleY = this.scale;
+    // this.rectangle.rotation = this.rotation;
 
     this.rectangle.on("mousedown", (evt) => {
       console.log("mousedown", evt);
@@ -182,18 +199,18 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
 
         this.original = {
           centerVector: {
-            x: this.container.x,
-            y: this.container.y
+            x: this.x,
+            y: this.y
           },
           offsetVector: {
-            x: evt.stageX - this.container.x,
-            y: evt.stageY - this.container.y
+            x: evt.stageX - this.x,
+            y: evt.stageY - this.y
           },
           clickVector: {
             x: evt.stageX,
             y: evt.stageY
           },
-          scaleMagnitude: this.rectangle.scaleX
+          width: this.w
         };
       } else if(evt.nativeEvent.button === 2){ //RIGHT CLICK
 
@@ -209,8 +226,8 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
       //console.log("pressmove", evt);
       switch(this.state){
         case "TRANSLATE":
-          this.container.x = this.x = evt.stageX - this.original.offsetVector.x;
-          this.container.y = this.y = evt.stageY - this.original.offsetVector.y;
+          this.x = evt.stageX - this.original.offsetVector.x;
+          this.y = evt.stageY - this.original.offsetVector.y;
           update = true;
           break;
         case "ROTATE":
@@ -219,7 +236,7 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
             y: evt.stageY - this.original.centerVector.y
           };
           let theta = degrees(Math.atan2(vec.y, vec.x));
-          this.rectangle.rotation = this.rotation = theta;
+          this.rotation = theta;
           update = true;
           break;
         case "SCALE":
@@ -228,15 +245,14 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
             y: evt.stageY - this.original.centerVector.y
           };
           //aspect ratio determined by y/x of vec
-          let aspect = vec.y / vec.x; //wrong behaviour
+          let aspect = vec.y / vec.x;
           //amount to scale determined by dividing magnitude
-          let scaleMagnitude =  this.original.scaleMagnitude * (Math.hypot(vec.x, vec.y) /
-                                Math.hypot(this.original.offsetVector.x, this.original.offsetVector.y));
+          let newWidth =  this.original.width * (Math.hypot(vec.x, vec.y) /
+                                  Math.hypot(this.original.offsetVector.x, this.original.offsetVector.y));
 
 
-          this.rectangle.scaleX = scaleMagnitude;
-          this.rectangle.scaleY = aspect * scaleMagnitude;
-          // console.log({x: this.container.x, y: this.container.y}, this.rectangle.rotation);
+          this.w = newWidth;
+          this.h = aspect * newWidth;
           console.log(
             bounding_box(
               {x: this.container.x, y: this.container.y},
@@ -246,8 +262,9 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
               this.rectangle.scaleY
             )
           );
-          // console.log(this.rectangle.getBounds());
-          update=true;
+          this.environment.setState({
+            update: true
+          });
           break;
       }
     });
