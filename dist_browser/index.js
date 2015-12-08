@@ -36426,7 +36426,7 @@ var EaselRectangle = (function () {
     });
 
     this.rectangle.on("pressmove", function (evt) {
-      //console.log("pressmove", evt);
+      console.log("pressmove", evt);
       switch (_this3.state) {
         case "TRANSLATE":
           _this3.x = evt.stageX - _this3.original.offsetVector.x;
@@ -36452,15 +36452,7 @@ var EaselRectangle = (function () {
 
           _this3.w = newWidth;
           _this3.h = aspect * newWidth;
-          // console.log(
-          //   bounding_box(
-          //     {x: this.container.x, y: this.container.y},
-          //     {w: this.w, h: this.h},
-          //     this.rectangle.rotation,
-          //     this.rectangle.scaleX,
-          //     this.rectangle.scaleY
-          //   )
-          // );
+          console.log(bounding_box({ x: _this3.x, y: _this3.y }, { w: _this3.w, h: _this3.h }, _this3.rotation, _this3.rectangle.scaleX, _this3.rectangle.scaleY));
           break;
       }
       _this3.environment.setState({
