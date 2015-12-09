@@ -36401,25 +36401,24 @@ var EaselRectangle = (function () {
         } else {
           _this3.state = "TRANSLATE";
         }
-
-        _this3.original = {
-          centerVector: {
-            x: _this3.x,
-            y: _this3.y
-          },
-          offsetVector: {
-            x: evt.stageX - _this3.x,
-            y: evt.stageY - _this3.y
-          },
-          clickVector: {
-            x: evt.stageX,
-            y: evt.stageY
-          },
-          width: _this3.w
-        };
       } else if (evt.nativeEvent.button === 2) {//RIGHT CLICK
 
       }
+      _this3.original = {
+        centerVector: {
+          x: _this3.x,
+          y: _this3.y
+        },
+        offsetVector: {
+          x: evt.stageX - _this3.x,
+          y: evt.stageY - _this3.y
+        },
+        clickVector: {
+          x: evt.stageX,
+          y: evt.stageY
+        },
+        width: _this3.w
+      };
     });
 
     this.rectangle.on("mouseup", function (evt) {

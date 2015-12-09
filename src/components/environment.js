@@ -242,24 +242,24 @@ class EaselRectangle { //outside folks don't know about this one
           this.state = "TRANSLATE";
         }
 
-        this.original = {
-          centerVector: {
-            x: this.x,
-            y: this.y
-          },
-          offsetVector: {
-            x: evt.stageX - this.x,
-            y: evt.stageY - this.y
-          },
-          clickVector: {
-            x: evt.stageX,
-            y: evt.stageY
-          },
-          width: this.w
-        };
       } else if(evt.nativeEvent.button === 2){ //RIGHT CLICK
 
       }
+      this.original = {
+        centerVector: {
+          x: this.x,
+          y: this.y
+        },
+        offsetVector: {
+          x: evt.stageX - this.x,
+          y: evt.stageY - this.y
+        },
+        clickVector: {
+          x: evt.stageX,
+          y: evt.stageY
+        },
+        width: this.w
+      };
     });
 
     this.rectangle.on("mouseup", (evt) => {
