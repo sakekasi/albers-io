@@ -36390,7 +36390,9 @@ var EaselRectangle = (function () {
 
     this.rectangle.on("mousedown", function (evt) {
       console.log("mousedown", evt);
-      if (evt.nativeEvent.button === 0) {
+      if (evt.nativeEvent instanceof TouchEvent) {
+        _this3.state = "TRANSLATE";
+      } else if (evt.nativeEvent.button === 0) {
         //LEFT CLICK
         if (evt.nativeEvent.shiftKey) {
           _this3.state = "ROTATE";
@@ -36452,7 +36454,15 @@ var EaselRectangle = (function () {
 
           _this3.w = newWidth;
           _this3.h = aspect * newWidth;
-          console.log(bounding_box({ x: _this3.x, y: _this3.y }, { w: _this3.w, h: _this3.h }, _this3.rotation, _this3.rectangle.scaleX, _this3.rectangle.scaleY));
+          // console.log(
+          //   bounding_box(
+          //     {x: this.x, y: this.y},
+          //     {w: this.w, h: this.h},
+          //     this.rotation,
+          //     this.rectangle.scaleX,
+          //     this.rectangle.scaleY
+          //   )
+          // );
           break;
       }
       _this3.environment.setState({

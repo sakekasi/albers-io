@@ -231,7 +231,9 @@ class EaselRectangle { //outside folks don't know about this one
 
     this.rectangle.on("mousedown", (evt) => {
       console.log("mousedown", evt);
-      if(evt.nativeEvent.button === 0){ //LEFT CLICK
+      if(evt.nativeEvent instanceof TouchEvent){
+        this.state = "TRANSLATE";
+      } else if(evt.nativeEvent.button === 0){ //LEFT CLICK
         if(evt.nativeEvent.shiftKey){
           this.state = "ROTATE";
         } else if(evt.nativeEvent.ctrlKey){
@@ -294,15 +296,15 @@ class EaselRectangle { //outside folks don't know about this one
 
           this.w = newWidth;
           this.h = aspect * newWidth;
-          console.log(
-            bounding_box(
-              {x: this.x, y: this.y},
-              {w: this.w, h: this.h},
-              this.rotation,
-              this.rectangle.scaleX,
-              this.rectangle.scaleY
-            )
-          );
+          // console.log(
+          //   bounding_box(
+          //     {x: this.x, y: this.y},
+          //     {w: this.w, h: this.h},
+          //     this.rotation,
+          //     this.rectangle.scaleX,
+          //     this.rectangle.scaleY
+          //   )
+          // );
           break;
       }
       this.environment.setState({
