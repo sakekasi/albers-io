@@ -10,10 +10,9 @@ import Color exposing (Color, rgb)
 import String exposing (toInt)
 
 
-type alias Model = {
-  source: string
-  colors: color list
-}
+type alias Model = List Color
+
+view : Signal.Address Color -> Model -> Html
 
 
 --results for palette turn up here
