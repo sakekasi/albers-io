@@ -1,4 +1,4 @@
-module ColorSwatch where
+module ColorSwatch (Model, update, view, toCss) where
 
 import Html exposing (Html, div)
 import Html.Events exposing (onClick)
@@ -11,10 +11,11 @@ type alias Model = Color
 update: () -> Model -> Model
 update _ x = x
 
-view: Signal.Address Model -> Model -> Html
+-- view: Signal.Address Model -> Model -> Html
+view: Signal.Address () -> Model -> Html
 view address model =
-  div [ onClick address model
-      , class "swatch"
+  div [ --onClick address model
+       class "swatch"
       , style [ ("background-color", toCss model)
               , ("width", "50px")
               , ("height", "50px")]
