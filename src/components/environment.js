@@ -191,8 +191,8 @@ class EaselRectangle extends Rectangle { //outside folks don't know about this o
       //console.log("pressmove", evt);
       switch(this.state){
         case "TRANSLATE":
-          this.shape.x = this.x = evt.stageX + this.offset.x;
-          this.shape.y = this.y = evt.stageY + this.offset.y;
+          this.shape.x = this.x = evt.stageX - this.offset.x;
+          this.shape.y = this.y = evt.stageY - this.offset.y;
           update = true;
           break;
         case "ROTATE":
